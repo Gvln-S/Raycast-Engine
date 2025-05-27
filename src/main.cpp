@@ -86,9 +86,9 @@ void draw_rays_2d() {
       if(map_ray>0 && map_ray<map_x*map_y && map[map_ray] == 1){vertical_x = ray_x; vertical_y = ray_y; distance_vertical = dist(player_x, player_y, vertical_x, vertical_y, ray_angle); dof = 8;} // hit wall
       else{ray_x += x_offset; ray_y += y_offset; dof += 1;} // next line
     }
-    if(distance_vertical<distance_horizontal){ray_x = vertical_x; ray_y = vertical_y; distance_total = distance_vertical;}
-    if(distance_vertical>distance_horizontal){ray_x = horizontal_x; ray_y = horizontal_y; distance_total = distance_horizontal;}
-    glColor3f(1,0,0); glLineWidth(3); glBegin(GL_LINES); glVertex2i(player_x, player_y); glVertex2i(ray_x, ray_y); glEnd();
+    if(distance_vertical<distance_horizontal){ray_x = vertical_x  ; ray_y = vertical_y  ; distance_total = distance_vertical  ; glColor3f(0.9,0,0); }
+    if(distance_vertical>distance_horizontal){ray_x = horizontal_x; ray_y = horizontal_y; distance_total = distance_horizontal; glColor3f(0.7,0,0); }
+    glLineWidth(3); glBegin(GL_LINES); glVertex2i(player_x, player_y); glVertex2i(ray_x, ray_y); glEnd();
 
     // draw 3d lines
     float pa_ra_d = player_angle - ray_angle; if(pa_ra_d<0){pa_ra_d+=2*PI;} if(pa_ra_d>2+PI){pa_ra_d-=2*PI;} distance_total=distance_total*cos(pa_ra_d); // fix fish eye
