@@ -58,7 +58,7 @@ float dist(float ax, float ay, float bx, float by, float ang) {
 }
 
 void draw_rays_2d() {
-  int ray, map_ray_x, map_ray_y, map_ray, dof; float ray_x, ray_y, ray_angle, x_offset, y_offset;
+  int ray, map_ray_x, map_ray_y, map_ray, dof; float ray_x, ray_y, ray_angle, x_offset, y_offset, distance_total;
   ray_angle = player_angle - DR*30; if(ray_angle<0){ray_angle+=2*PI;} if(ray_angle>2*PI){ray_angle -= 2*PI;}
   for(ray=0; ray<60; ray++) {
     // check horizontal lines
@@ -86,9 +86,15 @@ void draw_rays_2d() {
       if(map_ray>0 && map_ray<map_x*map_y && map[map_ray] == 1){vertical_x = ray_x; vertical_y = ray_y; distance_vertical = dist(player_x, player_y, vertical_x, vertical_y, ray_angle); dof = 8;} // hit wall
       else{ray_x += x_offset; ray_y += y_offset; dof += 1;} // next line
     }
-    if(distance_vertical<distance_horizontal){ray_x = vertical_x; ray_y = vertical_y;}
-    else {ray_x = horizontal_x; ray_y = horizontal_y;}
-    glColor3f(1,0,0); glLineWidth(1); glBegin(GL_LINES); glVertex2i(player_x, player_y); glVertex2i(ray_x, ray_y); glEnd();
+    if(distance_vertical<distance_horizontal){ray_x = vertical_x; ray_y = vertical_y; distance_total = distance_vertical;}
+    if(distance_vertical>distance_horizontal){ray_x = horizontal_x; ray_y = horizontal_y; distance_total = distance_horizontal;}
+    glColor3f(1,0,0); glLineWidth(3); glBegin(GL_LINES); glVertex2i(player_x, player_y); glVertex2i(ray_x, ray_y); glEnd();
+
+    // draw 3d lines
+    float pa_ra_d = player_angle - ray_angle; if(pa_ra_d<0){pa_ra_d+=2*PI;} if(pa_ra_d>2+PI){pa_ra_d-=2*PI;} distance_total=distance_total*cos(pa_ra_d); // fix fish eye
+    float line_horizontal = (map_superfice*320)/distance_total; if(line_horizontal>320){line_horizontal=320;}                                            // line height
+    float line_offset = 160 - line_horizontal/2;                                                                                                         // line offset
+    glLineWidth(8); glBegin(GL_LINES); glVertex2i(ray*8+530,line_offset); glVertex2i(ray*8+530,line_horizontal+line_offset); glEnd();
     ray_angle += DR; if(ray_angle<0){ray_angle+=2*PI;} if(ray_angle>2*PI){ray_angle -= 2*PI;}
 
   }
