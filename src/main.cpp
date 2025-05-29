@@ -289,15 +289,14 @@ void display()
     if(map[player_grip_sub_y_equilize*map_x + player_grip_x             ]==0){player_y-=player_delta_y*0.025*fps;}
   }
   if(keys['a']) {
-    float strafe_x = cos(player_angle+PI/2)*0.1*fps, strafe_y = sin(player_angle+PI/2)*0.1*fps;
+    float strafe_x = cos(player_angle-PI/2)*0.1*fps, strafe_y = sin(player_angle-PI/2)*0.1*fps;
     int map_x_a = (int)((player_x+strafe_x)/64),map_y_a = (int)((player_y+strafe_y)/64);
 
     if(map[player_grip_y * map_x + map_x_a] == 0) player_x += strafe_x;
     if(map[map_y_a * map_x + player_grip_x] == 0) player_y += strafe_y;
   }
-
   if(keys['d']) {
-    float strafe_x = cos(player_angle-PI/2)*0.1*fps, strafe_y = sin(player_angle-PI/2)*0.1*fps;
+    float strafe_x = cos(player_angle+PI/2)*0.1*fps, strafe_y = sin(player_angle+PI/2)*0.1*fps;
     int map_x_d = (int)((player_x+strafe_x)/64), map_y_d = (int)((player_y+strafe_y)/64);
 
     if(map[player_grip_y * map_x + map_x_d] == 0) player_x += strafe_x;
