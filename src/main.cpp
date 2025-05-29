@@ -4,6 +4,7 @@
 #include <cmath>
 #include <stdlib.h>
 #include <math.h>
+
 #define PI 3.1415926535
 #define P2 PI/2
 #define P3 3*PI/2
@@ -28,11 +29,11 @@ void draw_player() {
 int map_x = 8, map_y = 8, map_superfice = 64;
 int map[] = {
   1,1,1,1,1,1,1,1,
-  1,0,1,0,0,0,0,1,
-  1,0,1,0,0,0,0,1,
-  1,0,1,0,0,0,0,1,
+  1,0,0,1,0,0,0,1,
   1,0,0,0,0,0,0,1,
-  1,0,0,0,0,1,0,1,
+  1,0,0,0,0,0,0,1,
+  1,0,0,0,0,0,0,1,
+  1,1,1,0,0,1,0,1,
   1,0,0,0,0,0,0,1,
   1,1,1,1,1,1,1,1,
 };
@@ -57,34 +58,34 @@ float dist(float ax, float ay, float bx, float by, float ang) {
   return ( sqrt((bx-ax)*(bx-ax) + (by-ay)*(by-ay)) );
 }
 
-void draw_rays_2d() {
-  int ray, map_ray_x, map_ray_y, map_ray, dof; float ray_x, ray_y, ray_angle, x_offset, y_offset, distance_total;
+void draw_rays() {
+  int ray, map_ray_x, map_ray_y, map_ray, depth_field; float ray_x, ray_y, ray_angle, x_offset, y_offset, distance_total;
   ray_angle = player_angle - DR*30; if(ray_angle<0){ray_angle+=2*PI;} if(ray_angle>2*PI){ray_angle -= 2*PI;}
   for(ray=0; ray<60; ray++) {
     // check horizontal lines
-    dof = 0;
+    depth_field = 0;
     float distance_horizontal= 100000000, horizontal_x = player_x, horizontal_y = player_y;
     float aTan = -1/tan(ray_angle);
     if(ray_angle>PI){ray_y = (((int)player_y>>6)<<6)-0.0001; ray_x = (player_y - ray_y)*aTan+player_x; y_offset =-64; x_offset =-y_offset*aTan;} // looking up
     if(ray_angle<PI){ray_y = (((int)player_y>>6)<<6)+64;     ray_x = (player_y - ray_y)*aTan+player_x; y_offset = 64; x_offset =-y_offset*aTan;} // looking down
-    if(ray_angle==0 || ray_angle==PI){ ray_x = player_x; ray_y = player_y; dof = 8;} // looking straight left or right
-    while(dof<8) {
+    if(ray_angle==0 || ray_angle==PI){ ray_x = player_x; ray_y = player_y; depth_field= 8;} // looking straight left or right
+    while(depth_field<8) {
       map_ray_x = (int)(ray_x)>>6; map_ray_y = (int)(ray_y)>>6; map_ray = map_ray_y*map_x+map_ray_x;
       if(map_ray>0 && map_ray<map_x*map_y && map[map_ray] == 1){horizontal_x = ray_x; horizontal_y = ray_y; distance_horizontal = dist(player_x, player_y, horizontal_x, horizontal_y, ray_angle); dof = 8;} // hit wall
-      else{ray_x += x_offset; ray_y += y_offset; dof += 1;} // next wall
+      else{ray_x += x_offset; ray_y += y_offset; depth_field+= 1;} // next wall
     }
 
     // check vertical lines
-    dof = 0;
+    depth_field= 0;
     float distance_vertical = 100000000, vertical_x = player_x, vertical_y = player_y;
     float nTan = -tan(ray_angle);
     if(ray_angle>P2 && ray_angle<P3){ray_x = (((int)player_x>>6)<<6)-0.0001; ray_y = (player_x - ray_x)*nTan+player_y; x_offset =-64; y_offset =-x_offset*nTan;} // looking left
     else{ray_x = (((int)player_x>>6)<<6)+64;     ray_y = (player_x - ray_x)*nTan+player_y; x_offset = 64; y_offset =-x_offset*nTan;} // looking rigth
-    if(ray_angle== 0|| ray_angle==PI){ ray_x = player_x; ray_y = player_y; dof = 8;} // looking straight up or down
-    while(dof<8) {
+    if(ray_angle== 0|| ray_angle==PI){ ray_x = player_x; ray_y = player_y; depth_field= 8;} // looking straight up or down
+    while(depth_field<8) {
       map_ray_x = (int)(ray_x)>>6; map_ray_y = (int)(ray_y)>>6; map_ray = map_ray_y*map_x+map_ray_x;
       if(map_ray>0 && map_ray<map_x*map_y && map[map_ray] == 1){vertical_x = ray_x; vertical_y = ray_y; distance_vertical = dist(player_x, player_y, vertical_x, vertical_y, ray_angle); dof = 8;} // hit wall
-      else{ray_x += x_offset; ray_y += y_offset; dof += 1;} // next line
+      else{ray_x += x_offset; ray_y += y_offset; depth_field += 1;} // next line
     }
     if(distance_vertical<distance_horizontal){ray_x = vertical_x  ; ray_y = vertical_y  ; distance_total = distance_vertical  ; glColor3f(0.9,0,0); }
     if(distance_vertical>distance_horizontal){ray_x = horizontal_x; ray_y = horizontal_y; distance_total = distance_horizontal; glColor3f(0.7,0,0); }
@@ -105,19 +106,29 @@ void display()
   glClear(GL_COLOR_BUFFER_BIT);
 
   draw_map_2d();
-  draw_rays_2d();
+  draw_rays();
   draw_player();
 
   glutSwapBuffers();
 }
 
 void buttons(unsigned char key, int position_x, int position_y) {
-  if(key == 'a'){ player_angle -= 0.1; if(player_angle <    0){player_angle += 2*PI;} player_delta_x = cos(player_angle)*5; player_delta_y = sin(player_angle)*5;}
-  if(key == 'd'){ player_angle += 0.1; if(player_angle > 2*PI){player_angle -= 2*PI;} player_delta_x = cos(player_angle)*5; player_delta_y = sin(player_angle)*5;}
-  if(key == 'w'){ player_x += player_delta_x; player_y += player_delta_y;}
-  if(key == 's'){ player_x -= player_delta_x; player_y -= player_delta_y;}
+  if(key == 'a'){player_x += player_delta_y; player_y -= player_delta_x;}
+  if(key == 'd'){player_x -= player_delta_y; player_y += player_delta_x;}
+  if(key == 'w'){player_x += player_delta_x; player_y += player_delta_y;}
+  if(key == 's'){player_x -= player_delta_x; player_y -= player_delta_y;}
   glutPostRedisplay();
 }
+
+void mouse_move(int mouse_x, int mouse_y) {
+  int last_x = 512, delta_x = mouse_x - last_x;
+  float sensitivity = 0.003f;
+  last_x = mouse_x; player_angle += delta_x * sensitivity;
+  if(player_angle<   0) {player_angle += 2 * PI;}
+  if(player_angle>2*PI) {player_angle -= 2 * PI;}
+  glutPostRedisplay();
+}
+
 
 void init() {
   glClearColor(0.1, 0.1, 0.1, 0);
@@ -140,8 +151,9 @@ int main(int argc, char** argv)
   // reder loop
   glutDisplayFunc(display);
 
-  // keyboard inputs
+  // keyboard and mouse inputs
   glutKeyboardFunc(buttons);
+  glutPassiveMotionFunc(mouse_move);
 
   glutMainLoop();
   return 0;
