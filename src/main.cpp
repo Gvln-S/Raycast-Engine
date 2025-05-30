@@ -182,12 +182,34 @@ int map_x = 8, map_y = 8, map_superfice = 64;
 int map_walls[] = {
   1,1,1,1,1,1,1,1,
   1,0,0,1,0,0,0,1,
-  1,0,0,1,0,0,0,1,
-  1,1,4,1,0,0,0,1,
+  1,0,0,0,0,0,0,1,
+  1,1,1,1,4,1,1,1,
   1,0,0,0,0,0,0,1,
   1,0,0,0,0,0,0,1,
   1,0,0,0,0,0,0,1,
   1,1,1,1,1,1,1,1,
+};
+
+int map_ceiling[] = {
+  0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,
+};
+
+int map_floors[] = {
+  0,0,0,1,1,0,0,0,
+  0,0,0,1,1,0,0,0,
+  0,0,0,1,1,0,0,0,
+  0,0,0,1,1,0,0,0,
+  0,0,0,1,1,0,0,0,
+  0,0,0,1,1,0,0,0,
+  0,0,0,1,1,0,0,0,
+  0,0,0,1,1,0,0,0,
 };
 
 void draw_map_2d() {
@@ -215,7 +237,7 @@ void draw_rays_2d() {
 
   ray_angle = fix_angle(player_angle+30);
 
-  for(ray=0; ray<60; ray++) {
+  for(ray=0; ray<80; ray++) {
     int vertical_map_texture = 0, horizontal_map_texture = 0; // map texture number
 
     // vertical lines
@@ -250,7 +272,7 @@ void draw_rays_2d() {
     if(distance_vertical<distance_horizontal){horizontal_map_texture = vertical_map_texture; shade = 0.5; ray_x = vertical_x; ray_y = vertical_y; distance_horizontal = distance_vertical; glColor3f(0.6,0.6,0.6);}
     glLineWidth(2); glBegin(GL_LINES); glVertex2i(player_x, player_y); glVertex2i(ray_x, ray_y); glEnd();
 
-    // draw 3d lines
+    // draw walls
     int ca=fix_angle(player_angle-ray_angle); distance_horizontal=distance_horizontal*cos(deg_to_rad(ca));
     int line_horizontal = (map_superfice*320)/(distance_horizontal); if(line_horizontal>320) {line_horizontal=320;}
     float texture_y_step = 32.0/(float)line_horizontal;
@@ -258,20 +280,35 @@ void draw_rays_2d() {
     if(line_horizontal>320){texture_y_offset = (line_horizontal-320)/2.0; line_horizontal=320;}   // line height and limit
     float line_offset = 160 - (line_horizontal>>1);                                               // line offset
                                                                                                                                                             
-    int wall_y;
+    int thing_y;
     float texture_y = texture_y_offset*texture_y_step+horizontal_map_texture*32;
     float texture_x; 
     if(shade==1) {texture_x = (int)(ray_x/2.0)%32; if (ray_angle>180) {texture_x = 31-texture_x;}}
     else         {texture_x = (int)(ray_y/2.0)%32; if (ray_angle>90 && ray_angle<270) {texture_x = 31-texture_x;}}
 
-    for(wall_y = 0; wall_y<line_horizontal; wall_y++){
+    for(thing_y = 0; thing_y<line_horizontal; thing_y++){
       float c=All_Textures[(int)(texture_y)*32+(int)(texture_x)]*shade;
-      if(horizontal_map_texture==0) {glColor3f(c,     c/2.0, c/2.0);}
+      if(horizontal_map_texture==0) {glColor3f(c/1.5, c/1.5, c/1.5);}
       if(horizontal_map_texture==1) {glColor3f(c,     c    , c/2.0);}
       if(horizontal_map_texture==2) {glColor3f(c/2.0, c/2.0, c    );}
       if(horizontal_map_texture==3) {glColor3f(c/2.0, c    , c/2.0);}
-      glLineWidth(8); glBegin(GL_POINTS); glVertex2i(ray*8+530,wall_y+line_offset); glEnd();
+      glLineWidth(8); glBegin(GL_POINTS); glVertex2i(ray*8+530,thing_y+line_offset); glEnd();
       texture_y+=texture_y_step;
+    }
+    
+    // draw floors
+    for(thing_y=line_offset+line_horizontal;thing_y<320;thing_y++) {
+      float delta_y = thing_y-(320/2.0), degrees=deg_to_rad(ray_angle), ray_angle_fix(cos(deg_to_rad(fix_angle(player_angle-ray_angle))));
+      texture_x= player_x/2+cos(degrees)*158*32/delta_y/ray_angle_fix;
+      texture_y= player_y/2-sin(degrees)*158*32/delta_y/ray_angle_fix;
+      int map_ray_short=map_floors[(int)(texture_y/32.0)*map_x+(int)(texture_x/32.0)]*32*32;
+      float c=All_Textures[((int)(texture_y)&31)*32+((int)(texture_x)&31)]*0.7;
+      glColor3f(c/1.3,c/1.3,c); glLineWidth(8); glBegin(GL_POINTS); glVertex2i(ray*8+530,thing_y); glEnd();
+
+      // draw ceiling
+      map_ray=map_ceiling[(int)(texture_y/32.0)*map_x+(int)(texture_x/32.0)]*32*32;
+      c=All_Textures[((int)(texture_y)&31)*32+((int)(texture_x)&31)+map_ray]*0.7;
+      glColor3f(c/1.3, c/1.3, c/1.3); glLineWidth(8); glBegin(GL_POINTS); glVertex2i(ray*8+530,320-thing_y); glEnd();
     }
     ray_angle = fix_angle(ray_angle-1);
   }
@@ -298,20 +335,20 @@ void display()
     if(map_walls[player_grip_sub_y_equilize*map_x + player_grip_x             ]==0){player_y-=player_delta_y*0.025*fps;}
   }
   if(keys['a']) {
-    float angle = fix_angle(player_angle - 90);
+    float angle = fix_angle(player_angle+90);
     float strafe_x =  cos(deg_to_rad(angle));
     float strafe_y = -sin(deg_to_rad(angle));
 
-    if(map_walls[player_grip_y * map_x + player_grip_add_x_equilize] == 0) {player_x += strafe_x * 0.08f * fps;}
-    if(map_walls[player_grip_add_y_equilize * map_x + player_grip_x] == 0) {player_y += strafe_y * 0.08f * fps;}
+    if(map_walls[player_grip_y*map_x+player_grip_add_x_equilize] == 0) {player_x+=strafe_x*0.08f*fps;}
+    if(map_walls[player_grip_add_y_equilize*map_x+player_grip_x] == 0) {player_y+=strafe_y*0.08f*fps;}
   }
   if(keys['d']) {
-    float angle = fix_angle(player_angle + 90);
+    float angle = fix_angle(player_angle-90);
     float strafe_x =  cos(deg_to_rad(angle));
     float strafe_y = -sin(deg_to_rad(angle));
 
-    if(map_walls[player_grip_y * map_x + player_grip_sub_x_equilize] == 0) {player_x += strafe_x * 0.08f * fps;}
-    if(map_walls[player_grip_sub_y_equilize * map_x + player_grip_x] == 0) {player_y += strafe_y * 0.08f * fps;}
+    if(map_walls[player_grip_y*map_x+player_grip_sub_x_equilize] == 0) {player_x+=strafe_x*0.08f*fps;}
+    if(map_walls[player_grip_sub_y_equilize*map_x+player_grip_x] == 0) {player_y+=strafe_y*0.08f*fps;}
   }
   if(keys['e']) {
     int x_equalize = 0; if(player_delta_x<0) {x_equalize=-25;} else{x_equalize=25;}
@@ -354,7 +391,7 @@ void mouse_move(int mouse_x, int mouse_y) {
 
 void init() {
   gluOrtho2D(0,1024,512,0);
-  player_x = 300; player_y = 300; player_delta_x = cos(player_angle)*5; player_delta_y = sin(player_angle)*5;
+  player_x = 400; player_y = 400; player_delta_x = cos(player_angle)*5; player_delta_y = sin(player_angle)*5;
 }
 
 int main(int argc, char** argv)
