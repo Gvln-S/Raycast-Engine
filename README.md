@@ -38,6 +38,5 @@ make
 ```
 
 ahí subo unas fotos para que vean como se ve antes de descargarlo:
-![photo_one][img/github_one.png]
-![photo_two][img/github_two.png]
-
+![photo_one](img/github_one.png)
+![photo_two](img/github_two.png)
